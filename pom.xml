@@ -23,6 +23,8 @@
     <modules>
         <module>server-sep-2021</module>
         <module>client-sep-2021</module>
+        <module>server-nio-sep-2021</module>
+        <module>client-nio-sep-2021</module>
     </modules>
 
     <dependencies>
