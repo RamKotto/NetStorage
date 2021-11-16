@@ -1,6 +1,9 @@
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
+import io.netty.util.ReferenceCountUtil;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public class LiteServerChannelInboundHandler extends ChannelInboundHandlerAdapter {
 
     public LiteServerChannelInboundHandler() {
@@ -9,27 +12,29 @@ public class LiteServerChannelInboundHandler extends ChannelInboundHandlerAdapte
 
     @Override
     public void channelRegistered(ChannelHandlerContext ctx) throws Exception {
-        super.channelRegistered(ctx);
+        log.debug("Channel is registered");
     }
 
     @Override
     public void channelUnregistered(ChannelHandlerContext ctx) throws Exception {
-        super.channelUnregistered(ctx);
+        log.debug("Channel is unregistered");
     }
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
-        super.channelActive(ctx);
+        log.debug("Channel is active");
     }
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-        super.channelInactive(ctx);
+        log.debug("Channel is inactive");
     }
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-        super.channelRead(ctx, msg);
+        var incomingMessage = (String) msg;
+        System.out.println("Incoming message: " + incomingMessage);
+        ReferenceCountUtil.release(msg);
     }
 
     @Override
@@ -49,6 +54,7 @@ public class LiteServerChannelInboundHandler extends ChannelInboundHandlerAdapte
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-        super.exceptionCaught(ctx, cause);
+        log.debug("Catch cause " + cause.getMessage());
+        ctx.close();
     }
 }

@@ -5,7 +5,9 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.string.StringDecoder;
 import io.netty.handler.codec.string.StringEncoder;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public class LiteServer {
 
     public static void main(String[] args) {
@@ -37,6 +39,7 @@ public class LiteServer {
                     .childOption(ChannelOption.SO_KEEPALIVE, true);
 
             Channel channel = serverBootstrap.bind(9000).sync().channel();
+            System.out.println("Server started...");
             channel.closeFuture().sync();
         } finally {
             bossGroup.shutdownGracefully();
