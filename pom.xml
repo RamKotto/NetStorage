@@ -23,6 +23,8 @@
     <modules>
         <module>Server</module>
         <module>Client</module>
+        <module>NettyServerEcho</module>
+        <module>NettyClientEcho</module>
     </modules>
 
 
