@@ -38,6 +38,7 @@ public class LiteServerChannelInboundHandler extends ChannelInboundHandlerAdapte
         var incomingMessage = (String) msg;
         System.out.println("Incoming message: " + incomingMessage);
         ReferenceCountUtil.release(msg);
+        ctx.writeAndFlush("Message from server: " + incomingMessage);
     }
 
     @Override
@@ -52,7 +53,7 @@ public class LiteServerChannelInboundHandler extends ChannelInboundHandlerAdapte
 
     @Override
     public void channelWritabilityChanged(ChannelHandlerContext ctx) throws Exception {
-        ctx.write(scanner.nextLine());
+        log.debug("channelWritabilityChanged method");
     }
 
     @Override
