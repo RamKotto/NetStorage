@@ -1,4 +1,4 @@
-package server.utils;
+package utils;
 
 public class StringUtils {
 
