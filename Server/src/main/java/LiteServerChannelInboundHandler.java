@@ -3,8 +3,11 @@ import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.util.ReferenceCountUtil;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.Scanner;
+
 @Slf4j
 public class LiteServerChannelInboundHandler extends ChannelInboundHandlerAdapter {
+    Scanner scanner = new Scanner(System.in);
 
     public LiteServerChannelInboundHandler() {
         super();
@@ -35,6 +38,7 @@ public class LiteServerChannelInboundHandler extends ChannelInboundHandlerAdapte
         var incomingMessage = (String) msg;
         System.out.println("Incoming message: " + incomingMessage);
         ReferenceCountUtil.release(msg);
+        ctx.writeAndFlush("Message from server: " + incomingMessage);
     }
 
     @Override
@@ -49,7 +53,7 @@ public class LiteServerChannelInboundHandler extends ChannelInboundHandlerAdapte
 
     @Override
     public void channelWritabilityChanged(ChannelHandlerContext ctx) throws Exception {
-        super.channelWritabilityChanged(ctx);
+        log.debug("channelWritabilityChanged method");
     }
 
     @Override
