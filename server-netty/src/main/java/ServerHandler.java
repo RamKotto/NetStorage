@@ -16,7 +16,7 @@ public class ServerHandler extends SimpleChannelInboundHandler<String> {
     private static int newClientIndex = 1;
 
     @Override
-    public void channelActive(ChannelHandlerContext ctx) throws Exception {
+    public void channelActive(ChannelHandlerContext ctx) {
         log.debug("Client was connected..." + ctx);
         channels.add(ctx.channel());
         clientName = "Client #" + newClientIndex;
@@ -25,7 +25,7 @@ public class ServerHandler extends SimpleChannelInboundHandler<String> {
     }
 
     @Override
-    protected void channelRead0(ChannelHandlerContext channelHandlerContext, String s) throws Exception {
+    protected void channelRead0(ChannelHandlerContext channelHandlerContext, String s) {
         String out = createOutputMessage(clientName, s);
         log.debug("Received message: " + out);
         if (s.startsWith("/")) {
@@ -33,8 +33,10 @@ public class ServerHandler extends SimpleChannelInboundHandler<String> {
                 String newName = changeName(s);
                 broadcastMessage("SERVER", clientName + " changed name to " + newName);
                 clientName = newName;
+            } else if (s.startsWith("/quit")) {
+                channelHandlerContext.close();
             }
-                return;
+            return;
         }
         broadcastMessage(clientName, s);
     }
@@ -47,7 +49,7 @@ public class ServerHandler extends SimpleChannelInboundHandler<String> {
     }
 
     @Override
-    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
         log.debug(cause.getMessage());
         channels.remove(ctx.channel());
         broadcastMessage("SERVER", clientName + " left the chat.");
@@ -55,7 +57,7 @@ public class ServerHandler extends SimpleChannelInboundHandler<String> {
     }
 
     @Override
-    public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+    public void channelInactive(ChannelHandlerContext ctx) {
         log.debug("Клиент " + clientName + " left the chat.");
         channels.remove(ctx.channel());
         broadcastMessage("SERVER", clientName + " left the chat.");

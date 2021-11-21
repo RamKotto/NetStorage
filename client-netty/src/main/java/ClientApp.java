@@ -61,6 +61,10 @@ public class ClientApp {
             String msg;
             while (true) {
                 msg = scanner.nextLine();
+                if (msg.startsWith("/quit")) {
+                    cp.close();
+                    System.exit(-1);
+                }
                 cp.sendMsg(msg);
             }
         }).start();
