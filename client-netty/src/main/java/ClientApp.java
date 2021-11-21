@@ -29,7 +29,8 @@ public class ClientApp {
                             @Override
                             protected void initChannel(SocketChannel socketChannel) {
                                 channel = socketChannel;
-                                socketChannel.pipeline().addLast(new StringDecoder(),
+                                socketChannel.pipeline().addLast(
+                                        new StringDecoder(),
                                         new StringEncoder(),
                                         new ClientHandler());
                             }
@@ -65,7 +66,7 @@ public class ClientApp {
                     cp.close();
                     System.exit(-1);
                 }
-                cp.sendMsg(msg);
+                cp.sendMsg(msg + "\n");
             }
         }).start();
     }
