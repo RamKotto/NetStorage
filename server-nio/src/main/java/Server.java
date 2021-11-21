@@ -16,7 +16,7 @@ public class Server {
     private ServerSocketChannel serverSocketChannel;
     private volatile boolean stop;
 
-    Server() throws IOException {
+    public Server() throws IOException {
         selector = Selector.open();
         serverSocketChannel = ServerSocketChannel.open();
         serverSocketChannel.configureBlocking(false);
