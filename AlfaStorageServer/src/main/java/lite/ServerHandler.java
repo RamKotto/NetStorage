@@ -3,8 +3,6 @@ package lite;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 
-import java.util.Date;
-
 public class ServerHandler extends SimpleChannelInboundHandler<Message> {
 
     @Override
@@ -44,9 +42,15 @@ public class ServerHandler extends SimpleChannelInboundHandler<Message> {
 
     @Override
     protected void channelRead0(ChannelHandlerContext channelHandlerContext, Message msg) throws Exception {
-        System.out.println("Message from client: " + msg.getText());
-        Message message = new Message();
-        message.setText("" + new Date() + " " + msg.getText());
-        channelHandlerContext.writeAndFlush(message);
+        if (msg instanceof TextMessage) {
+            var message = (TextMessage) msg;
+            System.out.println("Incoming Test Message from client: " + message.getText());
+            channelHandlerContext.writeAndFlush(message);
+        }
+        if(msg instanceof DateMessage) {
+            var message = (DateMessage) msg;
+            System.out.println("Incoming Date Message from client: " + message.getDate());
+            channelHandlerContext.writeAndFlush(message);
+        }
     }
 }
