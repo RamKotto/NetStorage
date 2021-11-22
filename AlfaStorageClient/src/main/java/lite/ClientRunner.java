@@ -12,6 +12,7 @@ import io.netty.handler.codec.serialization.ObjectDecoder;
 import io.netty.handler.codec.serialization.ObjectEncoder;
 
 import java.util.Date;
+import java.util.Scanner;
 
 public class ClientRunner {
 
@@ -50,9 +51,12 @@ public class ClientRunner {
 
             while (true) {
                 Message message = new Message();
-                message.setText("New message form client: " + new Date());
+//                message.setText("New message form client: " + new Date());
+//                channel.writeAndFlush(message);
+//                Thread.sleep(5000);
+                Scanner scanner = new Scanner(System.in);
+                message.setText(scanner.nextLine());
                 channel.writeAndFlush(message);
-                Thread.sleep(5000);
             }
 
         } catch (InterruptedException e) {

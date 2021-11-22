@@ -46,7 +46,7 @@ public class ServerHandler extends SimpleChannelInboundHandler<Message> {
     protected void channelRead0(ChannelHandlerContext channelHandlerContext, Message msg) throws Exception {
         System.out.println("Message from client: " + msg.getText());
         Message message = new Message();
-        message.setText("" + new Date());
+        message.setText("" + new Date() + " " + msg.getText());
         channelHandlerContext.writeAndFlush(message);
     }
 }
