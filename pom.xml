@@ -23,6 +23,7 @@
     <modules>
         <module>AlfaStorageServer</module>
         <module>AlfaStorageClient</module>
+        <module>AlfaCommon</module>
     </modules>
 
     <properties>
