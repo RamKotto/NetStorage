@@ -1,0 +1,15 @@
+{
+  "text" : "Simple text",
+  "date" : "2021.11.23",
+  "entities" : [
+    {
+      "name" : "name one"
+    },
+    {
+      "name" : "name two"
+    },
+    {
+      "last name" : "name one two three"
+    }
+  ]
+}
