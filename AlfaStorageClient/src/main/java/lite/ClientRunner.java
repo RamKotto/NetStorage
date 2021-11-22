@@ -15,7 +15,7 @@ import java.util.Date;
 
 public class ClientRunner {
 
-    public static void main(String[] args) throws InterruptedException {
+    public static void main(String[] args) {
         new ClientRunner().start();
     }
 

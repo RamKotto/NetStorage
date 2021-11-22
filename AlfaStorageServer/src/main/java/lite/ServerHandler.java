@@ -41,7 +41,7 @@ public class ServerHandler extends SimpleChannelInboundHandler<Message> {
     }
 
     @Override
-    protected void channelRead0(ChannelHandlerContext channelHandlerContext, Message msg) throws Exception {
+    protected void channelRead0(ChannelHandlerContext channelHandlerContext, Message msg) {
         if (msg instanceof TextMessage) {
             var message = (TextMessage) msg;
             System.out.println("Incoming Test Message from client: " + message.getText());
