@@ -17,17 +17,18 @@ public class ServerHandler extends SimpleChannelInboundHandler<Message> {
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
-        super.channelActive(ctx);
+        System.out.println("Client connected... " + ctx.name());
     }
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-        super.channelInactive(ctx);
+        System.out.println("Client disconnected");
     }
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-        super.exceptionCaught(ctx, cause);
+        System.out.println(cause.getMessage());
+        ctx.close();
     }
 
     @Override
@@ -42,6 +43,15 @@ public class ServerHandler extends SimpleChannelInboundHandler<Message> {
 
     @Override
     protected void channelRead0(ChannelHandlerContext channelHandlerContext, Message msg) {
-        System.out.println("Incoming Test Message from client: " + msg.getText());
+        if (msg instanceof TextMessage) {
+            TextMessage message = (TextMessage) msg;
+            System.out.println("incoming text message: " + message.getText());
+            channelHandlerContext.writeAndFlush(msg);
+        }
+        if (msg instanceof DateMessage) {
+            DateMessage message = (DateMessage) msg;
+            System.out.println("incoming date message: " + message.getDate());
+            channelHandlerContext.writeAndFlush(msg);
+        }
     }
 }

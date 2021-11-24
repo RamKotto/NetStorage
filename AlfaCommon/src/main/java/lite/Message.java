@@ -1,14 +1,10 @@
 package lite;
 
-public class Message {
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
-    private String text;
-
-    public String getText() {
-        return text;
-    }
-
-    public void setText(String text) {
-        this.text = text;
-    }
+@JsonTypeInfo(
+        use = JsonTypeInfo.Id.MINIMAL_CLASS,
+        property = "type"
+)
+public abstract class Message {
 }
