@@ -1,5 +1,7 @@
 package lite;
 
+import handler.JsonDecoder;
+import handler.JsonEncoder;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -7,11 +9,6 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 import io.netty.handler.codec.LengthFieldPrepender;
-import io.netty.handler.codec.serialization.ClassResolvers;
-import io.netty.handler.codec.serialization.ObjectDecoder;
-import io.netty.handler.codec.serialization.ObjectEncoder;
-
-import java.util.Date;
 
 public class ClientRunner {
 
@@ -31,19 +28,12 @@ public class ClientRunner {
                             ch.pipeline().addLast(
                                     new LengthFieldBasedFrameDecoder(1024 * 1024, 0, 3, 0, 3),
                                     new LengthFieldPrepender(3),
-                                    new ObjectEncoder(),
-                                    new ObjectDecoder(ClassResolvers.cacheDisabled(null)),
+                                    new JsonEncoder(),
+                                    new JsonDecoder(),
                                     new SimpleChannelInboundHandler<Message>() {
                                         @Override
                                         protected void channelRead0(ChannelHandlerContext ctx, Message msg) {
-                                            if (msg instanceof TextMessage) {
-                                                var message = (TextMessage) msg;
-                                                System.out.println(message.getText());
-                                            }
-                                            if (msg instanceof DateMessage) {
-                                                var message = (DateMessage) msg;
-                                                System.out.println(message.getDate());
-                                            }
+                                            System.out.println(msg.getText());
                                         }
                                     }
                             );
@@ -56,13 +46,13 @@ public class ClientRunner {
             Channel channel = bootstrap.connect("localhost", 9000).sync().channel();
 
             while (true) {
-                TextMessage textMessage = new TextMessage();
-                textMessage.setText("This is a text message");
-                channel.writeAndFlush(textMessage);
+                Message message = new Message();
+                message.setText("This is a text message");
+                channel.writeAndFlush(message);
 
-                DateMessage dateMessage = new DateMessage();
-                dateMessage.setDate(new Date());
-                channel.writeAndFlush(dateMessage);
+//                DateMessage dateMessage = new DateMessage();
+//                dateMessage.setDate(new Date());
+//                channel.writeAndFlush(dateMessage);
 
                 Thread.sleep(2000);
             }

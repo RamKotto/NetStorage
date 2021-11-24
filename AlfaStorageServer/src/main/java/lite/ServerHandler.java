@@ -42,15 +42,6 @@ public class ServerHandler extends SimpleChannelInboundHandler<Message> {
 
     @Override
     protected void channelRead0(ChannelHandlerContext channelHandlerContext, Message msg) {
-        if (msg instanceof TextMessage) {
-            var message = (TextMessage) msg;
-            System.out.println("Incoming Test Message from client: " + message.getText());
-            channelHandlerContext.writeAndFlush(message);
-        }
-        if(msg instanceof DateMessage) {
-            var message = (DateMessage) msg;
-            System.out.println("Incoming Date Message from client: " + message.getDate());
-            channelHandlerContext.writeAndFlush(message);
-        }
+        System.out.println("Incoming Test Message from client: " + msg.getText());
     }
 }

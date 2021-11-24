@@ -1,5 +1,7 @@
 package lite;
 
+import handler.JsonDecoder;
+import handler.JsonEncoder;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
@@ -38,8 +40,8 @@ public class ServerRunner {
                             ch.pipeline().addLast(
                                     new LengthFieldBasedFrameDecoder(1024 * 1024, 0, 3, 0, 3),
                                     new LengthFieldPrepender(3),
-                                    new ObjectEncoder(),
-                                    new ObjectDecoder(ClassResolvers.cacheDisabled(null)),
+                                    new JsonEncoder(),
+                                    new JsonDecoder(),
                                     new ServerHandler()
                             );
                         }
