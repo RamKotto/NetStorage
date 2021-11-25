@@ -10,6 +10,9 @@ import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 import io.netty.handler.codec.LengthFieldPrepender;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.util.Date;
 
 public class ClientRunner {
@@ -34,14 +37,19 @@ public class ClientRunner {
                                     new JsonDecoder(),
                                     new SimpleChannelInboundHandler<Message>() {
                                         @Override
-                                        protected void channelRead0(ChannelHandlerContext ctx, Message msg) {
-                                            if (msg instanceof TextMessage) {
-                                                TextMessage message = (TextMessage) msg;
-                                                System.out.println("From server: " + message.getText());
-                                            }
-                                            if (msg instanceof DateMessage) {
-                                                DateMessage message = (DateMessage) msg;
-                                                System.out.println("From server: " + message.getDate());
+                                        protected void channelRead0(ChannelHandlerContext ctx, Message msg) throws IOException {
+                                            if (msg instanceof FileMessage) {
+                                                var message = (FileMessage) msg;
+                                                try (RandomAccessFile randomAccessFile = new RandomAccessFile("1", "rw")) {
+                                                    randomAccessFile.write(message.getContent());
+                                                } finally {
+
+                                                    // Пришлось перенести сюда, т.к. в основном блоке
+                                                    // worker.shutdownGracefully(); отрабатывало быстрее,
+                                                    // чем создавался файл
+                                                    ctx.close();
+                                                    worker.shutdownGracefully();
+                                                }
                                             }
                                         }
                                     }
@@ -54,22 +62,16 @@ public class ClientRunner {
 
             Channel channel = bootstrap.connect("localhost", 9000).sync().channel();
 
-            while (true) {
-                TextMessage message = new TextMessage();
-                message.setText("This is a text message");
-                channel.writeAndFlush(message);
-
-                DateMessage dateMessage = new DateMessage();
-                dateMessage.setDate(new Date());
-                channel.writeAndFlush(dateMessage);
-
-                Thread.sleep(2000);
-            }
+            final DownloadFileRequestMessage message = new DownloadFileRequestMessage();
+            message.setPath("C:\\Java\\NetworkStorage\\NetStorage\\test.json");
+            channel.writeAndFlush(message);
 
         } catch (InterruptedException e) {
             System.out.println("Клиент прервал свою работу...");
         } finally {
-            worker.shutdownGracefully();
+            System.out.println("[" + new Date() + "]" + " worker.shutdownGracefully();");
+            // перенесено после блока try в получении данных
+//            worker.shutdownGracefully();
         }
     }
 }

@@ -3,6 +3,8 @@ package lite;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 
+import java.io.RandomAccessFile;
+
 public class ServerHandler extends SimpleChannelInboundHandler<Message> {
 
     @Override
@@ -16,18 +18,18 @@ public class ServerHandler extends SimpleChannelInboundHandler<Message> {
     }
 
     @Override
-    public void channelActive(ChannelHandlerContext ctx) throws Exception {
+    public void channelActive(ChannelHandlerContext ctx) {
         System.out.println("Client connected... " + ctx.name());
     }
 
     @Override
-    public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+    public void channelInactive(ChannelHandlerContext ctx) {
         System.out.println("Client disconnected");
     }
 
     @Override
-    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-        System.out.println(cause.getMessage());
+    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
+        System.out.println("From Server Handler exceptionCaught(): " + cause.getMessage());
         ctx.close();
     }
 
@@ -52,6 +54,18 @@ public class ServerHandler extends SimpleChannelInboundHandler<Message> {
             DateMessage message = (DateMessage) msg;
             System.out.println("incoming date message: " + message.getDate());
             channelHandlerContext.writeAndFlush(msg);
+        }
+        if (msg instanceof DownloadFileRequestMessage) {
+            var message = (DownloadFileRequestMessage) msg;
+            try (RandomAccessFile accessFile = new RandomAccessFile(message.getPath(), "r")) {
+                final FileMessage fileMessage = new FileMessage();
+                byte[] content = new byte[(int) accessFile.length()];
+                accessFile.read(content);
+                fileMessage.setContent(content);
+                channelHandlerContext.writeAndFlush(fileMessage);
+            } catch (Exception e) {
+                System.out.println(e.getMessage());
+            }
         }
     }
 }
