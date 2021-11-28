@@ -6,6 +6,8 @@ import io.netty.channel.SimpleChannelInboundHandler;
 import java.io.RandomAccessFile;
 
 public class ServerHandler extends SimpleChannelInboundHandler<Message> {
+    private static final String FILE_NAME = "C:\\Java\\NetworkStorage\\NetStorage\\file";
+    private static final int BUFFER_SIZE = 1024 * 64;
 
     @Override
     public void channelRegistered(ChannelHandlerContext ctx) throws Exception {
@@ -55,16 +57,38 @@ public class ServerHandler extends SimpleChannelInboundHandler<Message> {
             System.out.println("incoming date message: " + message.getDate());
             channelHandlerContext.writeAndFlush(msg);
         }
-        if (msg instanceof DownloadFileRequestMessage) {
-            var message = (DownloadFileRequestMessage) msg;
-            try (RandomAccessFile accessFile = new RandomAccessFile(message.getPath(), "r")) {
-                final FileMessage fileMessage = new FileMessage();
-                byte[] content = new byte[(int) accessFile.length()];
-                accessFile.read(content);
-                fileMessage.setContent(content);
-                channelHandlerContext.writeAndFlush(fileMessage);
+        if (msg instanceof RequestFileMessage) {
+            try (var randomAccessFile = new RandomAccessFile(FILE_NAME, "r")) {
+                final long fileLength = randomAccessFile.length();
+                // Отправит даже пустой массив. В случае, если в этом нет необходимости,
+                // избавляемся от do, и оставляем только while
+                do {
+                    var position = randomAccessFile.getFilePointer();
+
+                    // чтобы не передавать нули, в случае, остаток файла меньше буфера
+                    final long availableBytes = fileLength - position;
+                    byte[] bytes;
+                    if (availableBytes >= BUFFER_SIZE) {
+                        bytes = new byte[BUFFER_SIZE];
+                    } else {
+                        bytes = new byte[(int) availableBytes];
+                    }
+
+                    randomAccessFile.read(bytes);
+
+                    final FileTransferMessage message = new FileTransferMessage();
+                    message.setContent(bytes);
+                    message.setStartPosition(position);
+
+                    channelHandlerContext.writeAndFlush(message);
+
+                } while (randomAccessFile.getFilePointer() < fileLength);
+
+                // Маркерное сообщение, для того, чтобы обозначить клиенту, что файл отправлен полностью
+                channelHandlerContext.writeAndFlush(new EndFileTransferMessage());
+
             } catch (Exception e) {
-                System.out.println(e.getMessage());
+                e.printStackTrace();
             }
         }
     }

@@ -10,8 +10,6 @@ import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 import io.netty.handler.codec.LengthFieldPrepender;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.Date;
 
@@ -33,23 +31,27 @@ public class ClientRunner {
                             ch.pipeline().addLast(
                                     new LengthFieldBasedFrameDecoder(1024 * 1024, 0, 3, 0, 3),
                                     new LengthFieldPrepender(3),
-                                    new JsonEncoder(),
                                     new JsonDecoder(),
+                                    new JsonEncoder(),
                                     new SimpleChannelInboundHandler<Message>() {
                                         @Override
-                                        protected void channelRead0(ChannelHandlerContext ctx, Message msg) throws IOException {
-                                            if (msg instanceof FileMessage) {
-                                                var message = (FileMessage) msg;
+                                        protected void channelRead0(ChannelHandlerContext ctx, Message msg) {
+                                            if (msg instanceof TextMessage) {
+                                                System.out.println("Message from server: " + ((TextMessage) msg).getText());
+                                            }
+                                            if (msg instanceof FileTransferMessage) {
+                                                System.out.println("New incoming file transfer message...");
+                                                var message = (FileTransferMessage) msg;
                                                 try (RandomAccessFile randomAccessFile = new RandomAccessFile("1", "rw")) {
+                                                    randomAccessFile.seek(message.getStartPosition());
                                                     randomAccessFile.write(message.getContent());
-                                                } finally {
-
-                                                    // Пришлось перенести сюда, т.к. в основном блоке
-                                                    // worker.shutdownGracefully(); отрабатывало быстрее,
-                                                    // чем создавался файл
-                                                    ctx.close();
-                                                    worker.shutdownGracefully();
+                                                } catch (Exception e) {
+                                                    e.printStackTrace();
                                                 }
+                                            }
+                                            if (msg instanceof EndFileTransferMessage) {
+                                                System.out.println("File transfer is finished...");
+                                                ctx.close();
                                             }
                                         }
                                     }
@@ -60,18 +62,17 @@ public class ClientRunner {
 
             System.out.println("Клиент запущен...");
 
-            Channel channel = bootstrap.connect("localhost", 9000).sync().channel();
-
-            final DownloadFileRequestMessage message = new DownloadFileRequestMessage();
-            message.setPath("C:\\Java\\NetworkStorage\\NetStorage\\test.json");
-            channel.writeAndFlush(message);
+            ChannelFuture channelFuture = bootstrap.connect("localhost", 9000).sync();
+            channelFuture.channel().writeAndFlush(new RequestFileMessage());
+            // Если не добавить, канал будет закрываться быстрее, чем будет получен файл!!!
+            channelFuture.channel().closeFuture().sync();
 
         } catch (InterruptedException e) {
             System.out.println("Клиент прервал свою работу...");
         } finally {
             System.out.println("[" + new Date() + "]" + " worker.shutdownGracefully();");
             // перенесено после блока try в получении данных
-//            worker.shutdownGracefully();
+            worker.shutdownGracefully();
         }
     }
 }
