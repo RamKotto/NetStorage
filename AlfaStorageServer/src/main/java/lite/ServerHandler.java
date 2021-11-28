@@ -26,7 +26,7 @@ public class ServerHandler extends SimpleChannelInboundHandler<Message> {
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) {
-        System.out.println("Client disconnected");
+        System.out.println("Client inactive");
     }
 
     @Override
