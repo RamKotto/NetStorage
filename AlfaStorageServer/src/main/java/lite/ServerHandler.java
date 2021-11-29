@@ -4,10 +4,17 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 
 import java.io.RandomAccessFile;
+import java.util.concurrent.Executor;
 
 public class ServerHandler extends SimpleChannelInboundHandler<Message> {
     private static final String FILE_NAME = "C:\\Java\\NetworkStorage\\NetStorage\\file";
     private static final int BUFFER_SIZE = 1024 * 64;
+    // Thread pool:
+    private final Executor executor;
+
+    public ServerHandler(Executor executor) {
+        this.executor = executor;
+    }
 
     @Override
     public void channelRegistered(ChannelHandlerContext ctx) throws Exception {
@@ -58,38 +65,42 @@ public class ServerHandler extends SimpleChannelInboundHandler<Message> {
             channelHandlerContext.writeAndFlush(msg);
         }
         if (msg instanceof RequestFileMessage) {
-            try (var randomAccessFile = new RandomAccessFile(FILE_NAME, "r")) {
-                final long fileLength = randomAccessFile.length();
-                // Отправит даже пустой массив. В случае, если в этом нет необходимости,
-                // избавляемся от do, и оставляем только while
-                do {
-                    var position = randomAccessFile.getFilePointer();
+            executor.execute(() -> {
+                try (var randomAccessFile = new RandomAccessFile(FILE_NAME, "r")) {
+                    final long fileLength = randomAccessFile.length();
+                    // Отправит даже пустой массив. В случае, если в этом нет необходимости,
+                    // избавляемся от do, и оставляем только while
+                    do {
+                        var position = randomAccessFile.getFilePointer();
 
-                    // чтобы не передавать нули, в случае, остаток файла меньше буфера
-                    final long availableBytes = fileLength - position;
-                    byte[] bytes;
-                    if (availableBytes >= BUFFER_SIZE) {
-                        bytes = new byte[BUFFER_SIZE];
-                    } else {
-                        bytes = new byte[(int) availableBytes];
-                    }
+                        // чтобы не передавать нули, в случае, остаток файла меньше буфера
+                        final long availableBytes = fileLength - position;
+                        byte[] bytes;
+                        if (availableBytes >= BUFFER_SIZE) {
+                            bytes = new byte[BUFFER_SIZE];
+                        } else {
+                            bytes = new byte[(int) availableBytes];
+                        }
 
-                    randomAccessFile.read(bytes);
+                        randomAccessFile.read(bytes);
 
-                    final FileTransferMessage message = new FileTransferMessage();
-                    message.setContent(bytes);
-                    message.setStartPosition(position);
+                        final FileTransferMessage message = new FileTransferMessage();
+                        message.setContent(bytes);
+                        message.setStartPosition(position);
 
-                    channelHandlerContext.writeAndFlush(message);
+                        // channelHandlerContext.writeAndFlush(message);
+                        // чтобы не перенагружать сервер - используем sync();
+                        channelHandlerContext.writeAndFlush(message).sync();
 
-                } while (randomAccessFile.getFilePointer() < fileLength);
+                    } while (randomAccessFile.getFilePointer() < fileLength);
 
-                // Маркерное сообщение, для того, чтобы обозначить клиенту, что файл отправлен полностью
-                channelHandlerContext.writeAndFlush(new EndFileTransferMessage());
+                    // Маркерное сообщение, для того, чтобы обозначить клиенту, что файл отправлен полностью
+                    channelHandlerContext.writeAndFlush(new EndFileTransferMessage());
 
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            });
         }
     }
 }

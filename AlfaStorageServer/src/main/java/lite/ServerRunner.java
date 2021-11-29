@@ -12,6 +12,9 @@ import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 import io.netty.handler.codec.LengthFieldPrepender;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 public class ServerRunner {
     private final int PORT;
 
@@ -26,6 +29,7 @@ public class ServerRunner {
     public void run() {
         NioEventLoopGroup bossGroup = new NioEventLoopGroup(1);
         NioEventLoopGroup workerGroup = new NioEventLoopGroup();
+        ExecutorService threadPool = Executors.newCachedThreadPool();
         try {
             ServerBootstrap server = new ServerBootstrap();
             server
@@ -39,7 +43,7 @@ public class ServerRunner {
                                     new LengthFieldPrepender(3),
                                     new JsonDecoder(),
                                     new JsonEncoder(),
-                                    new ServerHandler()
+                                    new ServerHandler(threadPool)
                             );
                         }
                     })
@@ -54,6 +58,7 @@ public class ServerRunner {
         } finally {
             bossGroup.shutdownGracefully();
             workerGroup.shutdownGracefully();
+            threadPool.shutdownNow();
         }
     }
 }
