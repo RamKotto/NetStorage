@@ -3,7 +3,7 @@ package auth;
 import java.sql.*;
 
 public class AuthHandler {
-    private Connection con;
+    private static Connection connection;
     private final String USER_TABLE = "users";
     private final String LOGIN = "login";
     private final String PASS = "pass";
@@ -16,9 +16,7 @@ public class AuthHandler {
                     PASS + " TEXT NOT NULL,\n" +
                     "UNIQUE(" + LOGIN + ", " + PASS + ")\n" +
                     ");";
-            PreparedStatement prSt = null;
-            prSt = getConnection().prepareStatement(createDB);
-            prSt.executeUpdate();
+            executeUpdate(createDB);
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -28,38 +26,35 @@ public class AuthHandler {
         try {
             String connectionString = "jdbc:sqlite:authorization.db";
             Class.forName("org.sqlite.JDBC");
-            con = DriverManager.getConnection(connectionString);
+            connection = DriverManager.getConnection(connectionString);
         } catch (ClassNotFoundException | SQLException e) {
             e.printStackTrace();
         }
-        return con;
+        return connection;
     }
 
     public User getOrCreateUser(String login, String password) {
         User user = null;
         try {
-            ResultSet rs = null;
             String connect = "SELECT * FROM " + USER_TABLE + " WHERE login = ? AND pass = ?";
             PreparedStatement prSt = getConnection().prepareStatement(connect);
             prSt.setString(1, login);
             prSt.setString(2, password);
-            rs = prSt.executeQuery();
-            if (rs != null) {
+            prSt.execute();
+            ResultSet resultSet = prSt.getResultSet();
+            if (resultSet != null) {
+                System.out.println("Getting!!!!");
                 user = new User(login, password);
                 user.setIsAuthorized(true);
                 return user;
-            } else if (rs == null) {
+            } else  {
+                System.out.println("Creating!!!!");
                 String insert = "INSERT OR IGNORE INTO " + USER_TABLE +
                         " (" + LOGIN + ", " + PASS + ") " +
-                        "VALUES(?,?)";
-                PreparedStatement insertStatement = getConnection().prepareStatement(insert);
-                insertStatement.setString(1, login);
-                insertStatement.setString(2, password);
-                insertStatement.addBatch();
-                insertStatement.executeBatch();
+                        "VALUES(" + login + "," + password + ")";
+                executeUpdate(insert);
                 user = new User(login, password);
                 user.setIsAuthorized(true);
-                System.out.println("Create user");
                 return user;
             }
         } catch (SQLException e) {
@@ -67,5 +62,11 @@ public class AuthHandler {
         }
         System.out.println("Wa are here!!");
         return user;
+    }
+
+    private void executeUpdate(String query) throws SQLException {
+        Statement statement = connection.createStatement();
+        // Для Insert, Update, Delete
+        statement.executeUpdate(query);
     }
 }
