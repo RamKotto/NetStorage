@@ -9,7 +9,7 @@ import java.io.RandomAccessFile;
 import java.util.concurrent.Executor;
 
 public class ServerHandler extends SimpleChannelInboundHandler<Message> {
-    private static final String FILE_NAME = "C:\\Java\\NetworkStorage\\NetStorage\\file";
+    private static final String FILE_NAME = "C:\\JavaProjects\\NetStorage\\file";
     private static final int BUFFER_SIZE = 1024 * 64;
     // Thread pool:
     private final Executor executor;
@@ -66,18 +66,10 @@ public class ServerHandler extends SimpleChannelInboundHandler<Message> {
             TextMessage tm = new TextMessage();
             tm.setText("Welcome " + user.getLogin() + " !");
             channelHandlerContext.writeAndFlush(tm);
+            System.out.println(user.isIsAuthorized());
         }
-        if (msg instanceof TextMessage && user.isIsAuthorized()) {
-            TextMessage message = (TextMessage) msg;
-            System.out.println("incoming text message: " + message.getText());
-            channelHandlerContext.writeAndFlush(msg);
-        }
-        if (msg instanceof DateMessage && user.isIsAuthorized()) {
-            DateMessage message = (DateMessage) msg;
-            System.out.println("incoming date message: " + message.getDate());
-            channelHandlerContext.writeAndFlush(msg);
-        }
-        if (msg instanceof RequestFileMessage && user.isIsAuthorized()) {
+
+        if (msg instanceof RequestFileMessage) {
             executor.execute(() -> {
                 try (var randomAccessFile = new RandomAccessFile(FILE_NAME, "r")) {
                     final long fileLength = randomAccessFile.length();
@@ -114,6 +106,18 @@ public class ServerHandler extends SimpleChannelInboundHandler<Message> {
                     e.printStackTrace();
                 }
             });
+        }
+
+        if ((msg instanceof TextMessage) && user.isIsAuthorized()) {
+            TextMessage message = (TextMessage) msg;
+            System.out.println("incoming text message: " + message.getText());
+            channelHandlerContext.writeAndFlush(msg);
+        }
+
+        if (msg instanceof DateMessage && user.isIsAuthorized()) {
+            DateMessage message = (DateMessage) msg;
+            System.out.println("incoming date message: " + message.getDate());
+            channelHandlerContext.writeAndFlush(msg);
         }
     }
 }

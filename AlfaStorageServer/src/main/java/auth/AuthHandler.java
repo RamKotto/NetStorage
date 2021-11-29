@@ -47,10 +47,11 @@ public class AuthHandler {
             if (rs != null) {
                 user = new User(login, password);
                 user.setIsAuthorized(true);
-            } else {
+                return user;
+            } else if (rs == null) {
                 String insert = "INSERT OR IGNORE INTO " + USER_TABLE +
-                        " (" + LOGIN + ", " + PASS + ", " + ") " +
-                        "VALUES(?,?,?)";
+                        " (" + LOGIN + ", " + PASS + ") " +
+                        "VALUES(?,?)";
                 PreparedStatement insertStatement = getConnection().prepareStatement(insert);
                 insertStatement.setString(1, login);
                 insertStatement.setString(2, password);
@@ -58,11 +59,13 @@ public class AuthHandler {
                 insertStatement.executeBatch();
                 user = new User(login, password);
                 user.setIsAuthorized(true);
-                
+                System.out.println("Create user");
+                return user;
             }
         } catch (SQLException e) {
             e.printStackTrace();
         }
+        System.out.println("Wa are here!!");
         return user;
     }
 }

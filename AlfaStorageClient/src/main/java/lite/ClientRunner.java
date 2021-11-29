@@ -65,7 +65,8 @@ public class ClientRunner {
             System.out.println("Для входа или создания нового пользователя, введите \"/auth <login> <password>\".");
 
             ChannelFuture channelFuture = bootstrap.connect("localhost", 9000).sync();
-            createMessage(channelFuture);
+//            createMessage(channelFuture);
+            channelFuture.channel().writeAndFlush(new RequestFileMessage());
             // Если не добавить, канал будет закрываться быстрее, чем будет получен файл!!!
             channelFuture.channel().closeFuture().sync();
 
@@ -87,6 +88,13 @@ public class ClientRunner {
                 obj = new AuthMessage();
                 ((AuthMessage) obj).setAuthString(message.replace("/auth", "").trim());
                 System.out.println(((AuthMessage) obj).getAuthString());
+                channelFuture.channel().writeAndFlush(obj);
+            } else if (message.startsWith("/pull")) {
+                obj = new RequestFileMessage();
+                channelFuture.channel().writeAndFlush(obj);
+            } else if (message.startsWith("/text")) {
+                obj = new TextMessage();
+                ((TextMessage) obj).setText("Hello World!!");
                 channelFuture.channel().writeAndFlush(obj);
             }
         }
