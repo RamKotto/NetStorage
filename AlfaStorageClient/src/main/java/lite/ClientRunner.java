@@ -62,7 +62,7 @@ public class ClientRunner {
                     .option(ChannelOption.SO_KEEPALIVE, true);
 
             System.out.println("Клиент запущен...");
-            System.out.println("Для входа или создания нового пользователя, введите \"<login> <password>\"");
+            System.out.println("Для входа или создания нового пользователя, введите \"<login> <password>\".");
 
             ChannelFuture channelFuture = bootstrap.connect("localhost", 9000).sync();
             AuthMessage authMessage = new AuthMessage();
