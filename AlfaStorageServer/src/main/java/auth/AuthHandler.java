@@ -4,9 +4,9 @@ import java.sql.*;
 
 public class AuthHandler {
     private Connection con;
-    public final String USER_TABLE = "users";
-    public final String LOGIN = "login";
-    public final String PASS = "pass";
+    private final String USER_TABLE = "users";
+    private final String LOGIN = "login";
+    private final String PASS = "pass";
 
     public AuthHandler() {
         try {
@@ -14,7 +14,7 @@ public class AuthHandler {
                     "(\n" +
                     LOGIN + " TEXT NOT NULL,\n" +
                     PASS + " TEXT NOT NULL,\n" +
-                    "UNIQUE(" + LOGIN + ", " + PASS + ", " + ")\n" +
+                    "UNIQUE(" + LOGIN + ", " + PASS + ")\n" +
                     ");";
             PreparedStatement prSt = null;
             prSt = getConnection().prepareStatement(createDB);

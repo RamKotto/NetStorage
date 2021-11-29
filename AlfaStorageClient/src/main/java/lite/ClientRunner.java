@@ -12,6 +12,7 @@ import io.netty.handler.codec.LengthFieldPrepender;
 
 import java.io.RandomAccessFile;
 import java.util.Date;
+import java.util.Scanner;
 
 public class ClientRunner {
 
@@ -61,9 +62,13 @@ public class ClientRunner {
                     .option(ChannelOption.SO_KEEPALIVE, true);
 
             System.out.println("Клиент запущен...");
+            System.out.println("Для входа или создания нового пользователя, введите \"<login> <password>\"");
 
             ChannelFuture channelFuture = bootstrap.connect("localhost", 9000).sync();
-            channelFuture.channel().writeAndFlush(new RequestFileMessage());
+            AuthMessage authMessage = new AuthMessage();
+            Scanner scanner = new Scanner(System.in);
+            authMessage.setAuthString(scanner.nextLine());
+            channelFuture.channel().writeAndFlush(authMessage);
             // Если не добавить, канал будет закрываться быстрее, чем будет получен файл!!!
             channelFuture.channel().closeFuture().sync();
 
