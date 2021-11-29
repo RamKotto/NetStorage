@@ -1,5 +1,7 @@
 package lite;
 
+import auth.AuthHandler;
+import auth.User;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 
@@ -11,6 +13,8 @@ public class ServerHandler extends SimpleChannelInboundHandler<Message> {
     private static final int BUFFER_SIZE = 1024 * 64;
     // Thread pool:
     private final Executor executor;
+
+    private AuthHandler authHandler;
 
     public ServerHandler(Executor executor) {
         this.executor = executor;
@@ -54,17 +58,26 @@ public class ServerHandler extends SimpleChannelInboundHandler<Message> {
 
     @Override
     protected void channelRead0(ChannelHandlerContext channelHandlerContext, Message msg) {
-        if (msg instanceof TextMessage) {
+        User user = null;
+        if (msg instanceof AuthMessage) {
+            authHandler = new AuthHandler();
+            String[] loginAndPass = ((AuthMessage) msg).getAuthString().split(" ");
+            user = authHandler.getOrCreateUser(loginAndPass[0], loginAndPass[1]);
+            TextMessage tm = new TextMessage();
+            tm.setText("Welcome " + user.getLogin() + " !");
+            channelHandlerContext.writeAndFlush(tm);
+        }
+        if (msg instanceof TextMessage && user.isIsAuthorized()) {
             TextMessage message = (TextMessage) msg;
             System.out.println("incoming text message: " + message.getText());
             channelHandlerContext.writeAndFlush(msg);
         }
-        if (msg instanceof DateMessage) {
+        if (msg instanceof DateMessage && user.isIsAuthorized()) {
             DateMessage message = (DateMessage) msg;
             System.out.println("incoming date message: " + message.getDate());
             channelHandlerContext.writeAndFlush(msg);
         }
-        if (msg instanceof RequestFileMessage) {
+        if (msg instanceof RequestFileMessage && user.isIsAuthorized()) {
             executor.execute(() -> {
                 try (var randomAccessFile = new RandomAccessFile(FILE_NAME, "r")) {
                     final long fileLength = randomAccessFile.length();

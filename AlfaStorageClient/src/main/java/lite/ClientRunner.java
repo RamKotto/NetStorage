@@ -63,7 +63,9 @@ public class ClientRunner {
             System.out.println("Клиент запущен...");
 
             ChannelFuture channelFuture = bootstrap.connect("localhost", 9000).sync();
-            channelFuture.channel().writeAndFlush(new RequestFileMessage());
+            AuthMessage authMessage = new AuthMessage();
+            authMessage.setAuthString("Ram 123123");
+            channelFuture.channel().writeAndFlush(authMessage);
             // Если не добавить, канал будет закрываться быстрее, чем будет получен файл!!!
             channelFuture.channel().closeFuture().sync();
 
@@ -72,7 +74,7 @@ public class ClientRunner {
         } finally {
             System.out.println("[" + new Date() + "]" + " worker.shutdownGracefully();");
             // перенесено после блока try в получении данных
-            worker.shutdownGracefully();
+//            worker.shutdownGracefully();
         }
     }
 }
