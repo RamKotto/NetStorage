@@ -52,7 +52,10 @@ public class ClientRunner {
                                             }
                                             if (msg instanceof EndFileTransferMessage) {
                                                 System.out.println("File transfer is finished...");
-                                                ctx.close();
+//                                                ctx.close();
+                                            }
+                                            if (msg instanceof DateMessage) {
+                                                System.out.println("Message from server: " + ((DateMessage) msg).getDate());
                                             }
                                         }
                                     }
@@ -66,7 +69,7 @@ public class ClientRunner {
 
             ChannelFuture channelFuture = bootstrap.connect("localhost", 9000).sync();
 //            createMessage(channelFuture);
-            channelFuture.channel().writeAndFlush(new RequestFileMessage());
+            createMessage(channelFuture);
             // Если не добавить, канал будет закрываться быстрее, чем будет получен файл!!!
             channelFuture.channel().closeFuture().sync();
 
@@ -95,6 +98,11 @@ public class ClientRunner {
             } else if (message.startsWith("/text")) {
                 obj = new TextMessage();
                 ((TextMessage) obj).setText("Hello World!!");
+                channelFuture.channel().writeAndFlush(obj);
+            }
+            else if (message.startsWith("/date")) {
+                obj = new DateMessage();
+                ((DateMessage) obj).setDate(new Date());
                 channelFuture.channel().writeAndFlush(obj);
             }
         }

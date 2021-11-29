@@ -108,13 +108,13 @@ public class ServerHandler extends SimpleChannelInboundHandler<Message> {
             });
         }
 
-        if ((msg instanceof TextMessage) && user.isIsAuthorized()) {
+        if (msg instanceof TextMessage) {
             TextMessage message = (TextMessage) msg;
             System.out.println("incoming text message: " + message.getText());
             channelHandlerContext.writeAndFlush(msg);
         }
 
-        if (msg instanceof DateMessage && user.isIsAuthorized()) {
+        if (msg instanceof DateMessage) {
             DateMessage message = (DateMessage) msg;
             System.out.println("incoming date message: " + message.getDate());
             channelHandlerContext.writeAndFlush(msg);
