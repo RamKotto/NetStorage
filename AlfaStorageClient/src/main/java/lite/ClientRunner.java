@@ -65,10 +65,7 @@ public class ClientRunner {
             System.out.println("Для входа или создания нового пользователя, введите \"<login> <password>\".");
 
             ChannelFuture channelFuture = bootstrap.connect("localhost", 9000).sync();
-            AuthMessage authMessage = new AuthMessage();
-            Scanner scanner = new Scanner(System.in);
-            authMessage.setAuthString(scanner.nextLine());
-            channelFuture.channel().writeAndFlush(authMessage);
+            channelFuture.channel().writeAndFlush(createMessage());
             // Если не добавить, канал будет закрываться быстрее, чем будет получен файл!!!
             channelFuture.channel().closeFuture().sync();
 
@@ -79,5 +76,18 @@ public class ClientRunner {
             // перенесено после блока try в получении данных
             worker.shutdownGracefully();
         }
+    }
+
+    public Object createMessage() {
+        Scanner scanner = new Scanner(System.in);
+        String message = scanner.nextLine();
+        Object obj = null;
+        if(message.startsWith("/auth")) {
+            obj = new AuthMessage();
+            ((AuthMessage) obj).setAuthString(message.replace("/auth", "").trim());
+            System.out.println(((AuthMessage) obj).getAuthString());
+            return obj;
+        }
+        return null;
     }
 }
