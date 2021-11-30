@@ -92,7 +92,7 @@ public class ServerHandler extends SimpleChannelInboundHandler<Message> {
             }
         }
 
-        if (msg instanceof RequestFileMessage) {
+        if (msg instanceof RequestFileMessage && tokenChecker(((RequestFileMessage) msg).getTOKEN())) {
             executor.execute(() -> {
                 try (var randomAccessFile = new RandomAccessFile(FILE_NAME, "r")) {
                     final long fileLength = randomAccessFile.length();
@@ -131,16 +131,26 @@ public class ServerHandler extends SimpleChannelInboundHandler<Message> {
             });
         }
 
-        if (msg instanceof TextMessage) {
+        if (msg instanceof TextMessage && tokenChecker(((TextMessage) msg).getTOKEN())) {
             TextMessage message = (TextMessage) msg;
             System.out.println("incoming text message: " + message.getText());
             channelHandlerContext.writeAndFlush(msg);
         }
 
-        if (msg instanceof DateMessage) {
+        if (msg instanceof DateMessage && tokenChecker(((DateMessage) msg).getTOKEN())) {
             DateMessage message = (DateMessage) msg;
             System.out.println("incoming date message: " + message.getDate());
             channelHandlerContext.writeAndFlush(msg);
         }
+    }
+
+    private boolean tokenChecker(String token) {
+        System.out.println(TOKENS);
+        for (String str : TOKENS) {
+            if (str.equals(token)) {
+                return true;
+            }
+        }
+        return false;
     }
 }

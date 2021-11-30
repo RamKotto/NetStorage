@@ -99,15 +99,18 @@ public class ClientRunner {
                 channelFuture.channel().writeAndFlush(obj);
             } else if (message.startsWith("/pull")) {
                 obj = new RequestFileMessage();
+                ((RequestFileMessage) obj).setTOKEN(TOKEN);
                 channelFuture.channel().writeAndFlush(obj);
             } else if (message.startsWith("/text")) {
                 obj = new TextMessage();
                 ((TextMessage) obj).setText(message.replace("/text", "").trim());
+                ((TextMessage) obj).setTOKEN(TOKEN);
                 channelFuture.channel().writeAndFlush(obj);
             }
             else if (message.startsWith("/date")) {
                 obj = new DateMessage();
                 ((DateMessage) obj).setDate(new Date());
+                ((DateMessage) obj).setTOKEN(TOKEN);
                 channelFuture.channel().writeAndFlush(obj);
             }
         }
