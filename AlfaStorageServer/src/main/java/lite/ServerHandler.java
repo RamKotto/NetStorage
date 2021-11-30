@@ -8,6 +8,7 @@ import io.netty.channel.SimpleChannelInboundHandler;
 
 import java.io.RandomAccessFile;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.Executor;
 
@@ -18,7 +19,7 @@ public class ServerHandler extends SimpleChannelInboundHandler<Message> {
     private final Executor executor;
 
     List<User> connectedUsers = new ArrayList<>();
-    List<String> TOKENS = new ArrayList<>();
+    HashSet<String> TOKENS = new HashSet<>();
 
     private ConnectionHandler connectionHandler;
 
@@ -146,7 +147,7 @@ public class ServerHandler extends SimpleChannelInboundHandler<Message> {
 
     private boolean tokenChecker(String token) {
         System.out.println(TOKENS);
-        for (String str : TOKENS) {
+        for (Object str : TOKENS) {
             if (str.equals(token)) {
                 return true;
             }

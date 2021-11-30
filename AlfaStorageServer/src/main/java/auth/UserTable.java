@@ -64,7 +64,7 @@ public class UserTable {
         try {
             String createDB = "CREATE TABLE IF NOT EXISTS " + USER_TABLE + "\n" +
                     "(\n" +
-                    LOGIN + " TEXT NOT NULL,\n" +
+                    LOGIN + " TEXT NOT NULL UNIQUE,\n" +
                     PASS + " TEXT NOT NULL,\n" +
                     "UNIQUE(" + LOGIN + ", " + PASS + ")\n" +
                     ");";
