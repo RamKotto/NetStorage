@@ -1,11 +1,14 @@
 package lite;
 
-import auth.AuthHandler;
-import auth.User;
+import auth.ConnectionHandler;
+import auth.UserTable;
+import models.User;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 
 import java.io.RandomAccessFile;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.Executor;
 
 public class ServerHandler extends SimpleChannelInboundHandler<Message> {
@@ -14,7 +17,10 @@ public class ServerHandler extends SimpleChannelInboundHandler<Message> {
     // Thread pool:
     private final Executor executor;
 
-    private AuthHandler authHandler;
+    List<User> connectedUsers = new ArrayList<>();
+    List<String> TOKENS = new ArrayList<>();
+
+    private ConnectionHandler connectionHandler;
 
     public ServerHandler(Executor executor) {
         this.executor = executor;
@@ -43,6 +49,7 @@ public class ServerHandler extends SimpleChannelInboundHandler<Message> {
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
         System.out.println("From Server Handler exceptionCaught(): " + cause.getMessage());
+        cause.printStackTrace();
         ctx.close();
     }
 
@@ -58,15 +65,31 @@ public class ServerHandler extends SimpleChannelInboundHandler<Message> {
 
     @Override
     protected void channelRead0(ChannelHandlerContext channelHandlerContext, Message msg) {
-        User user = null;
         if (msg instanceof AuthMessage) {
-            authHandler = new AuthHandler();
-            String[] loginAndPass = ((AuthMessage) msg).getAuthString().split(" ");
-            user = authHandler.getOrCreateUser(loginAndPass[0], loginAndPass[1]);
-            TextMessage tm = new TextMessage();
-            tm.setText("Welcome " + user.getLogin() + " !");
-            channelHandlerContext.writeAndFlush(tm);
-            System.out.println(user.isIsAuthorized());
+            ConnectionHandler.dbConnection();
+            UserTable.createUserTableIfNotExists();
+            String login = ((AuthMessage) msg).getAuthString().split(" ")[0];
+            String pass = ((AuthMessage) msg).getAuthString().split(" ")[1];
+            if (UserTable.getUserList(login, pass).size() <= 0) {
+                System.out.println("Нет таких юзеров!!!");
+                System.out.println("Но! Мы создадим =)");
+                UserTable.createUser(login, pass);
+                User user = new User(login, pass);
+                user.setIsAuthorized(true);
+                TOKENS.add("TOKEN" + user.getLogin() + user.isIsAuthorized());
+                TextMessage textMessage = new TextMessage();
+                textMessage.setText("TOKEN" + user.getLogin() + user.isIsAuthorized());
+                channelHandlerContext.writeAndFlush(textMessage);
+            } else {
+                System.out.println("Добро пожаловать " + login + "!");
+                System.out.println("Доступ открыт!!!");
+                User user = new User(login, pass);
+                user.setIsAuthorized(true);
+                TOKENS.add("TOKEN" + user.getLogin() + user.isIsAuthorized());
+                TextMessage textMessage = new TextMessage();
+                textMessage.setText("TOKEN" + user.getLogin() + user.isIsAuthorized());
+                channelHandlerContext.writeAndFlush(textMessage);
+            }
         }
 
         if (msg instanceof RequestFileMessage) {

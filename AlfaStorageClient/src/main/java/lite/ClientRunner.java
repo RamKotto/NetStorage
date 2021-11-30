@@ -15,6 +15,7 @@ import java.util.Date;
 import java.util.Scanner;
 
 public class ClientRunner {
+    private String TOKEN;
 
     public static void main(String[] args) {
         new ClientRunner().start();
@@ -37,8 +38,12 @@ public class ClientRunner {
                                     new SimpleChannelInboundHandler<Message>() {
                                         @Override
                                         protected void channelRead0(ChannelHandlerContext ctx, Message msg) {
-                                            if (msg instanceof TextMessage) {
+                                            if (msg instanceof TextMessage && !((TextMessage) msg).getText().startsWith("TOKEN")) {
                                                 System.out.println("Message from server: " + ((TextMessage) msg).getText());
+                                            }
+                                            if (msg instanceof TextMessage && ((TextMessage) msg).getText().startsWith("TOKEN")) {
+                                                TOKEN =  ((TextMessage) msg).getText();
+                                                System.out.println(TOKEN);
                                             }
                                             if (msg instanceof FileTransferMessage) {
                                                 System.out.println("New incoming file transfer message...");
@@ -97,7 +102,7 @@ public class ClientRunner {
                 channelFuture.channel().writeAndFlush(obj);
             } else if (message.startsWith("/text")) {
                 obj = new TextMessage();
-                ((TextMessage) obj).setText("Hello World!!");
+                ((TextMessage) obj).setText(message.replace("/text", "").trim());
                 channelFuture.channel().writeAndFlush(obj);
             }
             else if (message.startsWith("/date")) {

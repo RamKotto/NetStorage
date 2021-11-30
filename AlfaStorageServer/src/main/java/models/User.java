@@ -1,9 +1,14 @@
-package auth;
+package models;
 
 public class User {
+    private int id;
     private String login;
     private String password;
     private boolean isAuthorized;
+
+    public User() {
+        this.isAuthorized = false;
+    }
 
     public User(String login, String password) {
         this.login = login;
@@ -25,6 +30,14 @@ public class User {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
     }
 
     public boolean isIsAuthorized() {
