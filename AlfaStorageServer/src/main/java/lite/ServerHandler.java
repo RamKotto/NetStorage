@@ -7,10 +7,13 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 
 import java.io.RandomAccessFile;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.Executor;
+
+import static auth.ConnectionHandler.getConnection;
 
 public class ServerHandler extends SimpleChannelInboundHandler<Message> {
     private static final String FILE_NAME = "C:\\JavaProjects\\NetStorage\\file";
@@ -67,20 +70,30 @@ public class ServerHandler extends SimpleChannelInboundHandler<Message> {
     @Override
     protected void channelRead0(ChannelHandlerContext channelHandlerContext, Message msg) {
         if (msg instanceof AuthMessage) {
-            ConnectionHandler.dbConnection();
-            UserTable.createUserTableIfNotExists();
             String login = ((AuthMessage) msg).getAuthString().split(" ")[0];
             String pass = ((AuthMessage) msg).getAuthString().split(" ")[1];
             if (UserTable.getUserList(login, pass).size() <= 0) {
                 System.out.println("Нет таких юзеров!!!");
-                System.out.println("Но! Мы создадим =)");
-                UserTable.createUser(login, pass);
-                User user = new User(login, pass);
-                user.setIsAuthorized(true);
-                TOKENS.add("TOKEN" + user.getLogin() + user.isIsAuthorized());
-                TextMessage textMessage = new TextMessage();
-                textMessage.setText("TOKEN" + user.getLogin() + user.isIsAuthorized());
-                channelHandlerContext.writeAndFlush(textMessage);
+                System.out.println("Но! Мы попробуем создать =)");
+                try {
+                    UserTable.createUser(login, pass);
+                    User user = new User(login, pass);
+                    user.setIsAuthorized(true);
+                    TOKENS.add("TOKEN" + user.getLogin() + user.isIsAuthorized());
+                    TextMessage textMessage = new TextMessage();
+                    textMessage.setText("TOKEN" + user.getLogin() + user.isIsAuthorized());
+                    channelHandlerContext.writeAndFlush(textMessage);
+                } catch (Exception ex) {
+                    try {
+                        getConnection().rollback();
+                    } catch (SQLException rollbackEx) {
+                        System.out.println("Can't getConnection().rollback() in createUser method.");
+                        rollbackEx.printStackTrace();
+                    }
+                    TextMessage textMessage = new TextMessage();
+                    textMessage.setText("Имя уже зарегестрировано. необходимо выбрать другой логин.");
+                    channelHandlerContext.writeAndFlush(textMessage);
+                }
             } else {
                 System.out.println("Добро пожаловать " + login + "!");
                 System.out.println("Доступ открыт!!!");

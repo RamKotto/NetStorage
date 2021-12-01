@@ -20,23 +20,12 @@ public class UserTable {
     private static final String GET_USER_LIST = "select * from users where login = '%s' and " +
             "pass = '%s';";
 
-    public static void createUser(String login, String password) {
-        try {
-            getConnection().setAutoCommit(false);
-            Statement stmt = getConnection().createStatement();
-            stmt.execute(format(CREATE_USER, login, password));
-            getConnection().commit();
-            System.out.println("User entity with name: " + login + " created!");
-        } catch (SQLException ex) {
-            ex.printStackTrace();
-            System.out.println("User entity with name: " + login + " was not created!");
-            try {
-                getConnection().rollback();
-            } catch (SQLException rollbackEx) {
-                System.out.println("Can't getConnection().rollback() in createUser method.");
-                rollbackEx.printStackTrace();
-            }
-        }
+    public static void createUser(String login, String password) throws SQLException {
+        getConnection().setAutoCommit(false);
+        Statement stmt = getConnection().createStatement();
+        stmt.execute(format(CREATE_USER, login, password));
+        getConnection().commit();
+        System.out.println("User entity with name: " + login + " created!");
     }
 
     public static List<User> getUserList(String login, String password) {

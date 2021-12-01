@@ -1,5 +1,7 @@
 package lite;
 
+import auth.ConnectionHandler;
+import auth.UserTable;
 import handler.JsonDecoder;
 import handler.JsonEncoder;
 import io.netty.bootstrap.ServerBootstrap;
@@ -52,10 +54,13 @@ public class ServerRunner {
 
             ChannelFuture future = server.bind(PORT).sync();
             System.out.println("Server is running...");
+            ConnectionHandler.dbConnection();
+            UserTable.createUserTableIfNotExists();
             future.channel().closeFuture().sync();
         } catch (Exception e) {
             System.out.println("Ошибка запуска сервера...");
         } finally {
+            ConnectionHandler.closeConnection();
             bossGroup.shutdownGracefully();
             workerGroup.shutdownGracefully();
             threadPool.shutdownNow();
