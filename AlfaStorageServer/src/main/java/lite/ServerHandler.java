@@ -7,9 +7,11 @@ import models.User;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 
+import java.io.File;
 import java.io.RandomAccessFile;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.Executor;
@@ -102,7 +104,7 @@ public class ServerHandler extends SimpleChannelInboundHandler<Message> {
                 User user = new User(login, pass);
                 user.setIsAuthorized(true);
                 TOKENS.add("TOKEN" + user.getLogin() + user.isIsAuthorized());
-                FileUtil.createUserDir(user.getLogin());
+                FileUtil.createUserDir("TOKEN" + user.getLogin() + user.isIsAuthorized());
                 TextMessage textMessage = new TextMessage();
                 textMessage.setText("TOKEN" + user.getLogin() + user.isIsAuthorized());
                 channelHandlerContext.writeAndFlush(textMessage);
@@ -111,47 +113,60 @@ public class ServerHandler extends SimpleChannelInboundHandler<Message> {
 
         if (msg instanceof RequestFileMessage && tokenChecker(((RequestFileMessage) msg).getTOKEN())) {
             executor.execute(() -> {
-                try (var randomAccessFile = new RandomAccessFile(FILE_NAME, "r")) {
-                    final long fileLength = randomAccessFile.length();
-                    // Отправит даже пустой массив. В случае, если в этом нет необходимости,
-                    // избавляемся от do, и оставляем только while
-                    do {
-                        var position = randomAccessFile.getFilePointer();
+                for (String fileName : ((RequestFileMessage) msg).getFiles()) {
+                    try (var randomAccessFile = new RandomAccessFile(
+                            FileUtil.getBasePath() + ((RequestFileMessage) msg).getTOKEN() + "\\" + fileName,
+                            "r")) {
+                        final long fileLength = randomAccessFile.length();
+                        System.out.println(FileUtil.getBasePath() + ((RequestFileMessage) msg).getTOKEN() + "\\" + fileName);
+                        // Отправит даже пустой массив. В случае, если в этом нет необходимости,
+                        // избавляемся от do, и оставляем только while
+                        do {
+                            var position = randomAccessFile.getFilePointer();
 
-                        // чтобы не передавать нули, в случае, остаток файла меньше буфера
-                        final long availableBytes = fileLength - position;
-                        byte[] bytes;
-                        if (availableBytes >= BUFFER_SIZE) {
-                            bytes = new byte[BUFFER_SIZE];
-                        } else {
-                            bytes = new byte[(int) availableBytes];
-                        }
+                            // чтобы не передавать нули, в случае, остаток файла меньше буфера
+                            final long availableBytes = fileLength - position;
+                            byte[] bytes;
+                            if (availableBytes >= BUFFER_SIZE) {
+                                bytes = new byte[BUFFER_SIZE];
+                            } else {
+                                bytes = new byte[(int) availableBytes];
+                            }
 
-                        randomAccessFile.read(bytes);
+                            randomAccessFile.read(bytes);
 
-                        final FileTransferMessage message = new FileTransferMessage();
-                        message.setContent(bytes);
-                        message.setStartPosition(position);
+                            final FileTransferMessage message = new FileTransferMessage();
+                            message.setFileName(fileName);
+                            message.setContent(bytes);
+                            message.setStartPosition(position);
 
-                        // channelHandlerContext.writeAndFlush(message);
-                        // чтобы не перенагружать сервер - используем sync();
-                        channelHandlerContext.writeAndFlush(message).sync();
+                            // channelHandlerContext.writeAndFlush(message);
+                            // чтобы не перенагружать сервер - используем sync();
+                            channelHandlerContext.writeAndFlush(message).sync();
 
-                    } while (randomAccessFile.getFilePointer() < fileLength);
+                        } while (randomAccessFile.getFilePointer() < fileLength);
 
-                    // Маркерное сообщение, для того, чтобы обозначить клиенту, что файл отправлен полностью
-                    channelHandlerContext.writeAndFlush(new EndFileTransferMessage());
+                        // Маркерное сообщение, для того, чтобы обозначить клиенту, что файл отправлен полностью
+                        channelHandlerContext.writeAndFlush(new EndFileTransferMessage());
 
-                } catch (Exception e) {
-                    e.printStackTrace();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
                 }
             });
         }
 
-        if (msg instanceof TextMessage && tokenChecker(((TextMessage) msg).getTOKEN())) {
+        if (msg instanceof TextMessage &&
+                tokenChecker(((TextMessage) msg).getTOKEN()) &&
+                ((TextMessage) msg).getText().startsWith("/files")) {
             TextMessage message = (TextMessage) msg;
+            List<File> files = FileUtil.getUserFilesByToken(((TextMessage) msg).getTOKEN());
+            for (File file : files) {
+                TextMessage m = new TextMessage();
+                m.setText(file.getName() + " - " + new Date(file.lastModified()));
+                channelHandlerContext.writeAndFlush(m);
+            }
             System.out.println("incoming text message: " + message.getText());
-            channelHandlerContext.writeAndFlush(msg);
         }
 
         if (msg instanceof DateMessage && tokenChecker(((DateMessage) msg).getTOKEN())) {

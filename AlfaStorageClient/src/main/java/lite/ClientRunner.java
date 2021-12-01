@@ -11,6 +11,7 @@ import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 import io.netty.handler.codec.LengthFieldPrepender;
 
 import java.io.RandomAccessFile;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.Scanner;
 
@@ -42,13 +43,14 @@ public class ClientRunner {
                                                 System.out.println("Message from server: " + ((TextMessage) msg).getText());
                                             }
                                             if (msg instanceof TextMessage && ((TextMessage) msg).getText().startsWith("TOKEN")) {
-                                                TOKEN =  ((TextMessage) msg).getText();
+                                                TOKEN = ((TextMessage) msg).getText();
                                                 System.out.println(TOKEN);
                                             }
                                             if (msg instanceof FileTransferMessage) {
                                                 System.out.println("New incoming file transfer message...");
                                                 var message = (FileTransferMessage) msg;
-                                                try (RandomAccessFile randomAccessFile = new RandomAccessFile("1", "rw")) {
+                                                try (RandomAccessFile randomAccessFile = new RandomAccessFile(
+                                                        ((FileTransferMessage) msg).getFileName(), "rw")) {
                                                     randomAccessFile.seek(message.getStartPosition());
                                                     randomAccessFile.write(message.getContent());
                                                 } catch (Exception e) {
@@ -57,7 +59,6 @@ public class ClientRunner {
                                             }
                                             if (msg instanceof EndFileTransferMessage) {
                                                 System.out.println("File transfer is finished...");
-//                                                ctx.close();
                                             }
                                             if (msg instanceof DateMessage) {
                                                 System.out.println("Message from server: " + ((DateMessage) msg).getDate());
@@ -101,16 +102,20 @@ public class ClientRunner {
                 obj = new RequestFileMessage();
                 ((RequestFileMessage) obj).setTOKEN(TOKEN);
                 channelFuture.channel().writeAndFlush(obj);
-            } else if (message.startsWith("/text")) {
-                obj = new TextMessage();
-                ((TextMessage) obj).setText(message.replace("/text", "").trim());
-                ((TextMessage) obj).setTOKEN(TOKEN);
-                channelFuture.channel().writeAndFlush(obj);
-            }
-            else if (message.startsWith("/date")) {
+            } else if (message.startsWith("/date")) {
                 obj = new DateMessage();
                 ((DateMessage) obj).setDate(new Date());
                 ((DateMessage) obj).setTOKEN(TOKEN);
+                channelFuture.channel().writeAndFlush(obj);
+            } else if (message.startsWith("/files")) {
+                obj = new TextMessage();
+                ((TextMessage) obj).setText(message);
+                ((TextMessage) obj).setTOKEN(TOKEN);
+                channelFuture.channel().writeAndFlush(obj);
+            } else if (message.startsWith("/get")) {
+                obj = new RequestFileMessage();
+                ((RequestFileMessage) obj).setFiles(Arrays.asList(message.replace("/get", "").trim().split(" ")));
+                ((RequestFileMessage) obj).setTOKEN(TOKEN);
                 channelFuture.channel().writeAndFlush(obj);
             }
         }
