@@ -1,5 +1,6 @@
 package lite;
 
+import FileUtils.FileUtil;
 import auth.ConnectionHandler;
 import auth.UserTable;
 import models.User;
@@ -80,6 +81,7 @@ public class ServerHandler extends SimpleChannelInboundHandler<Message> {
                     User user = new User(login, pass);
                     user.setIsAuthorized(true);
                     TOKENS.add("TOKEN" + user.getLogin() + user.isIsAuthorized());
+                    FileUtil.createUserDir("TOKEN" + user.getLogin() + user.isIsAuthorized());
                     TextMessage textMessage = new TextMessage();
                     textMessage.setText("TOKEN" + user.getLogin() + user.isIsAuthorized());
                     channelHandlerContext.writeAndFlush(textMessage);
@@ -100,6 +102,7 @@ public class ServerHandler extends SimpleChannelInboundHandler<Message> {
                 User user = new User(login, pass);
                 user.setIsAuthorized(true);
                 TOKENS.add("TOKEN" + user.getLogin() + user.isIsAuthorized());
+                FileUtil.createUserDir(user.getLogin());
                 TextMessage textMessage = new TextMessage();
                 textMessage.setText("TOKEN" + user.getLogin() + user.isIsAuthorized());
                 channelHandlerContext.writeAndFlush(textMessage);
